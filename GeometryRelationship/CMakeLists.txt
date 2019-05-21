@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(PoseEstimator CXX C)
+project(GeometryRelationship CXX C)
 
 set(CMAKE_CXX_STANDARD 11)
 SET(CMAKE_BUILD_TYPE "Debug")
