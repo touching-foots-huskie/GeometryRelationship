@@ -50,7 +50,7 @@ namespace geometry_relation {
 
 			ENUM_CONTACT _temp_contact;
 			double _temp_noise_level;
-            vector<double> _temp_individual_noise;
+            
 			for (int i = 0; i < this->feature_num; i++) {
 				for (int j = 0; j < geometry_object.feature_num; j++) {
 					_temp_noise_level = this->feature_array_[i]->Contact(
