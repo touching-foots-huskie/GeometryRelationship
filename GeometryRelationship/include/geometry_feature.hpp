@@ -1,13 +1,15 @@
-#pragma once
 #include <math.h>
 #include <Eigen/Core>
 #include <iostream>
-#define M_PI 3.141592653589793238462643383279502884
+
+#ifndef GEOMETRYFEATURE
+#define GEOMETRYFEATURE
 
 namespace geometry_relation {
 
 	using Transform = Eigen::Matrix<double, 4, 4>;
 	using Coord = Eigen::Matrix<double, 4, 1>;
+    using Coord3 = Eigen::Matrix<double, 3, 1>;
 
 	enum ENUM_GEOMETRY_FEATURE {
 		unknown_feature, line, plane, surface
@@ -60,9 +62,11 @@ namespace geometry_relation {
 
 		virtual void GenerateRenderPoints(std::vector<Coord>& render_points, 
 			Transform pose_estimation, int render_points_num, std::vector<double> dimension_scale) = 0;
-		ENUM_GEOMETRY_FEATURE feature_type_;
+		
 		Coord point_;  // the unique representation for geometry feature
 		Coord direction_;
+
+        ENUM_GEOMETRY_FEATURE feature_type_;
 		double noise_bound_;
 		double other_value1_; // save value 1: r for surface.
 
@@ -235,6 +239,7 @@ namespace geometry_relation {
 			Coord world_direction = pose_estimation * this->direction_;
 			Coord world_x_axis = pose_estimation * this->x_axis_;
 			Coord world_z_axis = pose_estimation * this->z_axis_;
+
 			double length_gap = length / render_points_num;
 			double width_gap = width / render_points_num;
 			for (int i = 0; i < render_points_num; i++) {
@@ -311,7 +316,8 @@ namespace geometry_relation {
 			}
 
 			}
-		};
+            return - 1.0;
+        };
 
 		virtual void GenerateRenderPoints(std::vector<Coord>& render_points,
 			Transform pose_estimation, int render_points_num, std::vector<double> dimension_scale) override {
@@ -353,3 +359,5 @@ namespace geometry_relation {
 	};
 
 };
+
+#endif

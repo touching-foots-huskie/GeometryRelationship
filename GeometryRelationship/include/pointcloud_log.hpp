@@ -1,5 +1,3 @@
-#include <ros/ros.h>
-
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl/common/transforms.h>
@@ -17,9 +15,9 @@ void vis_points_in_pcl(const std::vector<Eigen::Vector4d> points, std::string fi
 
 	for (const auto& p : points) {
 		pcl::PointXYZ pp;
-		pp.x = p(1);
-		pp.y = p(2);
-		pp.z = p(3);
+		pp.x = p(0);
+		pp.y = p(1);
+		pp.z = p(2);
 		plane_cloud->points.push_back(pp);
 	}
 

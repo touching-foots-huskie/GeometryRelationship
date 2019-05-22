@@ -1,4 +1,3 @@
-#pragma once
 #include <map>
 #include <vector>
 #include <string>
@@ -6,6 +5,9 @@
 #include "geometry_object.hpp"
 #include "csvstream.hpp"
 #include "geometry_parse.hpp"
+
+#ifndef GEOMETRYINFERENCE
+#define GEOMETRYINFERENCE
 
 namespace geometry_relation{
 
@@ -106,7 +108,18 @@ namespace geometry_relation{
 								std::vector<Coord>& feature_direction_1, std::vector<Coord>& feature_direction_2,
 								std::vector<int>& feature_id_1, std::vector<int>& feature_id_2,
 								std::vector<double>& noise_level_vector) {
-			// TODO: it++ or ++it
+			// clean all
+            objects_id1.clear();
+            objects_id2.clear();
+            contact_type_vector.clear();
+            feature_point_1.clear();
+            feature_point_2.clear();
+            feature_direction_1.clear();
+            feature_direction_2.clear();
+            feature_id_1.clear();
+            feature_id_2.clear();
+            noise_level_vector.clear();
+            
 			bool contact_existence = false;
 			int contact_this_pair = 0;
 			for (auto it = objects.begin(); it != objects.end(); ++it) {
@@ -125,12 +138,15 @@ namespace geometry_relation{
 #ifdef _TEST_OUTPUT_
 					if (contact_existence) {
 						std::cout << "Object ids are " << it->first << " : " << it2->first << std::endl;
+                    }
 #endif // _TEST_OUTPUT_ 
-					}
+					
 				}
 			}
-		}
+		};
 		std::map<unsigned int, shared_ptr<GeometryObject> > objects;  // id : objects
 		std::map<unsigned int, shared_ptr<GeometryObject> > template_objects_in_class;
 	};
-}
+};
+
+#endif

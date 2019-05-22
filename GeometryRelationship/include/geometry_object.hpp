@@ -1,4 +1,3 @@
-#pragma once
 #include <map>
 #include <vector>
 #include <memory>
@@ -6,8 +5,9 @@
 #include <iostream>
 #include "geometry_feature.hpp"
 
-// TODO: change adapter for logging into csv files.
-// TODO: Do we really need different implementation for Contact in different obejects?
+
+#ifndef GEOMETRYOBJECT
+#define GEOMETRYOBJECT
 
 namespace geometry_relation {
 	enum ENUM_GEOMETRY_OBJECT {
@@ -50,6 +50,7 @@ namespace geometry_relation {
 
 			ENUM_CONTACT _temp_contact;
 			double _temp_noise_level;
+            vector<double> _temp_individual_noise;
 			for (int i = 0; i < this->feature_num; i++) {
 				for (int j = 0; j < geometry_object.feature_num; j++) {
 					_temp_noise_level = this->feature_array_[i]->Contact(
@@ -531,3 +532,5 @@ namespace geometry_relation {
 		double plane_noise = 0.1;
 	};
 }
+
+#endif

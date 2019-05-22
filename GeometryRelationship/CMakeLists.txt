@@ -12,10 +12,16 @@ file(GLOB ex_srcs "${PROJECT_SOURCE_DIR}/src/GeometryRelationship.cpp")
 # Eigen structure
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 
+# PCL structure
+find_package(PCL 1.8 REQUIRED)
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
+
 # export cmake setting to the source code
 include_directories("${PROJECT_SOURCE_DIR}/include")
 
 add_executable(${PROJECT_NAME} ${ex_srcs})
 # linking with dependences
 
-target_link_libraries(${PROJECT_NAME} Eigen3::Eigen)
+target_link_libraries(${PROJECT_NAME} Eigen3::Eigen  ${PCL_LIBRARIES})

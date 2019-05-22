@@ -1,4 +1,3 @@
-#pragma once
 /* -*- mode: c++ -*- */
 #ifndef CSVSTREAM_H
 #define CSVSTREAM_H

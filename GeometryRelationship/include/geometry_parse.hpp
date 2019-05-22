@@ -1,4 +1,3 @@
-#pragma once
 #include "csvstream.hpp"
 #include <iostream>
 #include <string>
