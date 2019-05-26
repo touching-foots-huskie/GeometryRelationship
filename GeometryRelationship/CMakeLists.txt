@@ -13,7 +13,7 @@ file(GLOB ex_srcs "${PROJECT_SOURCE_DIR}/src/GeometryRelationship.cpp")
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 
 # PCL structure
-find_package(PCL 1.8 REQUIRED)
+find_package(PCL 1.8 REQUIRED COMPONENTS visualization)
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})

@@ -82,6 +82,7 @@ int main()
 		noise_level_vector);
 
 	// log contacts into points
+    /*
 	std::vector<geometry_relation::Coord> logged_points;
 	for (int i = 0; i < feature_id_1.size(); i++) {
 		logged_points.clear();
@@ -91,6 +92,8 @@ int main()
 		// I can log them & show them here.
         vis_points_in_pcl(logged_points, "/home/harvey/CppProjects/GeometryRelationship/GeometryRelationship/data/Contact_" + std::to_string(i));
 	}
+    */
+    ShowGeometry(relation_inferencer, robot_pose);
 	// Generate a set of points.
 	return 0;
 }

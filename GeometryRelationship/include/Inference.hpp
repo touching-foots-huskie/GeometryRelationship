@@ -1,6 +1,10 @@
 #include <map>
 #include <vector>
 #include <string>
+
+// visualization related
+#include <pcl/visualization/pcl_visualizer.h>
+
 #include "geometry_feature.hpp"
 #include "geometry_object.hpp"
 #include "csvstream.hpp"
@@ -10,6 +14,8 @@
 #define GEOMETRYINFERENCE
 
 namespace geometry_relation{
+
+    using Point = pcl::PointXYZ;
 
 	class RelationInference 
 	{
@@ -47,7 +53,7 @@ namespace geometry_relation{
 					shared_ptr<GeometryObject> _support_ptr = make_shared<Support>(relative_transform.inverse());
 					this->template_objects_in_class[object_label] = _support_ptr;
 					break;
-				}
+                }
 
 				default: {
 					break;
@@ -144,9 +150,44 @@ namespace geometry_relation{
 				}
 			}
 		};
+         
 		std::map<unsigned int, shared_ptr<GeometryObject> > objects;  // id : objects
 		std::map<unsigned int, shared_ptr<GeometryObject> > template_objects_in_class;
+        
 	};
+};
+
+
+void ShowGeometry(geometry_relation::RelationInference& inferencer, geometry_relation::Transform& camera_pose) {
+    // show estimated geometry relationship in current camera pose
+    int object_id = 0;
+    pcl::visualization::PCLVisualizer viewer_;
+    viewer_.setSize(600, 800);
+    for (auto object : inferencer.objects) {
+        pcl::ModelCoefficients coefficients;
+        std::string id_string = to_string(object_id);
+        object.second->GenerateCoefficients(coefficients, camera_pose);
+        // case into float 
+        switch(object.second->geometry_type_) {
+            case geometry_relation::box : {
+                viewer_.addCube(coefficients, id_string);
+                break;
+            }
+
+            case geometry_relation::cylinder : {
+                viewer_.addCube(coefficients, id_string);
+                break;
+            }
+            case geometry_relation::support : {
+                viewer_.addPlane(coefficients, id_string);
+                break;
+            }
+            default :
+                break;
+        }
+        object_id += 1;
+    }
+    viewer_.spin();
 };
 
 #endif

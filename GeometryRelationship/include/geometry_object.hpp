@@ -5,6 +5,8 @@
 #include <iostream>
 #include "geometry_feature.hpp"
 
+// pcl related:
+#include <pcl/visualization/pcl_visualizer.h>
 
 #ifndef GEOMETRYOBJECT
 #define GEOMETRYOBJECT
@@ -51,11 +53,14 @@ namespace geometry_relation {
 			ENUM_CONTACT _temp_contact;
 			double _temp_noise_level;
             
+            std::vector<double> _temp_individual_noise;
+
 			for (int i = 0; i < this->feature_num; i++) {
 				for (int j = 0; j < geometry_object.feature_num; j++) {
 					_temp_noise_level = this->feature_array_[i]->Contact(
 						*geometry_object.feature_array_[j], _temp_contact,
-						this->object_position_, geometry_object.object_position_);
+						this->object_position_, geometry_object.object_position_,
+                        _temp_individual_noise);
 					/*
 					if (other_constraints_made[j])
 						continue;  // no same feature for different constraints.
@@ -95,13 +100,14 @@ namespace geometry_relation {
 						std::cout << "Contact type: " << contact_type_string[_temp_contact] << std::endl;
 						std::cout << "Between " << geometry_type_string[this->geometry_type_]
 							<< " : " << geometry_type_string[geometry_object.geometry_type_] << std::endl;
-						std::cout << "Noise level " << _temp_noise_level << std::endl;
+						std::cout << "Noise level " << _temp_individual_noise[0] << " , " << _temp_individual_noise[1] << std::endl;
+
 #endif // _TEST_OUTPUT_ 
 						
 						// break;  // if plane-plane, then there no plane-edge.
 						
-						
 					}
+                    _temp_individual_noise.clear();
 				}
 			}
 			return contact_exist;
@@ -112,6 +118,7 @@ namespace geometry_relation {
 		virtual void make_ptr_from_template(std::vector<double>& dimension_scale, Transform& transform_inside) = 0;
 		virtual void GenerateFeaturePoints(std::vector<Coord>& render_points, int feature_id) = 0;
 
+        virtual void GenerateCoefficients(pcl::ModelCoefficients& coefficients, Transform& camera_pose) = 0;
 		~GeometryObject() {
 			delete feature_array_;
 		};
@@ -151,7 +158,7 @@ namespace geometry_relation {
 			d1 = this->Inner_transfrom_ * d1;
 			dx1 = this->Inner_transfrom_ * dx1;
 			dz1 = this->Inner_transfrom_ * dz1;
-			this->planes[0] = PlaneFeature(p1, d1, plane_noise, dx1, dz1);
+			this->planes[0] = PlaneFeature(p1, d1, plane_r_noise, plane_t_noise, dx1, dz1);
 
 			Coord p2;
 			p2 << -a / 2.0, 0.0, 0.0, 1.0;
@@ -167,7 +174,7 @@ namespace geometry_relation {
 			d2 = this->Inner_transfrom_ * d2;
 			dx2 = this->Inner_transfrom_ * dx2;
 			dz2 = this->Inner_transfrom_ * dz2;
-			this->planes[1] = PlaneFeature(p2, d2, plane_noise, dx2, dz2);
+			this->planes[1] = PlaneFeature(p2, d2, plane_r_noise, plane_t_noise, dx2, dz2);
 
 			Coord p3;
 			p3 << 0.0, b / 2.0, 0.0, 1.0;
@@ -183,7 +190,7 @@ namespace geometry_relation {
 			d3 = this->Inner_transfrom_ * d3;
 			dx3 = this->Inner_transfrom_ * dx3;
 			dz3 = this->Inner_transfrom_ * dz3;
-			this->planes[2] = PlaneFeature(p3, d3, plane_noise, dx3, dz3);
+			this->planes[2] = PlaneFeature(p3, d3, plane_r_noise, plane_t_noise, dx3, dz3);
 
 			Coord p4;
 			p4 << 0.0, -b / 2.0, 0.0, 1.0;
@@ -199,7 +206,7 @@ namespace geometry_relation {
 			d4 = this->Inner_transfrom_ * d4;
 			dx4 = this->Inner_transfrom_ * dx4;
 			dz4 = this->Inner_transfrom_ * dz4;
-			this->planes[3] = PlaneFeature(p4, d4, plane_noise, dx4, dz4);
+			this->planes[3] = PlaneFeature(p4, d4, plane_r_noise, plane_t_noise, dx4, dz4);
 
 			Coord p5;
 			p5 << 0.0, 0.0, c / 2.0, 1.0;
@@ -216,7 +223,7 @@ namespace geometry_relation {
 			dx5 = this->Inner_transfrom_ * dx5;
 			dz5 = this->Inner_transfrom_ * dz5;
 
-			this->planes[4] = PlaneFeature(p5, d5, plane_noise, dx5, dz5);
+			this->planes[4] = PlaneFeature(p5, d5, plane_r_noise, plane_t_noise, dx5, dz5);
 
 			Coord p6;
 			p6 << 0.0, 0.0, -c / 2.0, 1.0;
@@ -232,7 +239,7 @@ namespace geometry_relation {
 			d6 = this->Inner_transfrom_ * d6;
 			dx6 = this->Inner_transfrom_ * dx6;
 			dz6 = this->Inner_transfrom_ * dz6;
-			this->planes[5] = PlaneFeature(p6, d6, plane_noise, dx6, dz6);
+			this->planes[5] = PlaneFeature(p6, d6, plane_r_noise, plane_t_noise, dx6, dz6);
 
 			// 12 lines:
 			Coord ep1;
@@ -241,7 +248,7 @@ namespace geometry_relation {
 			ed1 << 1.0, 0.0, 0.0, 0.0;
 			ep1 = this->Inner_transfrom_ * ep1;
 			ed1 = this->Inner_transfrom_ * ed1;
-			this->edges[0] = LineFeature(ep1, ed1, edge_noise);
+			this->edges[0] = LineFeature(ep1, ed1, edge_r_noise, edge_t_noise);
 
 			Coord ep2;
 			ep2 << 0.0, b / 2.0, -c / 2.0, 1.0;
@@ -249,7 +256,7 @@ namespace geometry_relation {
 			ed2 << 1.0, 0.0, 0.0, 0.0;
 			ep2 = this->Inner_transfrom_ * ep2;
 			ed2 = this->Inner_transfrom_ * ed2;
-			this->edges[1] = LineFeature(ep2, ed2, edge_noise);
+			this->edges[1] = LineFeature(ep2, ed2, edge_r_noise, edge_t_noise);
 
 			Coord ep3;
 			ep3 << 0.0, -b / 2.0, c / 2.0, 1.0;
@@ -257,7 +264,7 @@ namespace geometry_relation {
 			ed3 << 1.0, 0.0, 0.0, 0.0;
 			ep3 = this->Inner_transfrom_ * ep3;
 			ed3 = this->Inner_transfrom_ * ed3;
-			this->edges[2] = LineFeature(ep3, ed3, edge_noise);
+			this->edges[2] = LineFeature(ep3, ed3, edge_r_noise, edge_t_noise);
 
 			Coord ep4;
 			ep4 << 0.0, -b / 2.0, -c / 2.0, 1.0;
@@ -265,7 +272,7 @@ namespace geometry_relation {
 			ed4 << 1.0, 0.0, 0.0, 0.0;
 			ep4 = this->Inner_transfrom_ * ep4;
 			ed4 = this->Inner_transfrom_ * ed4;
-			this->edges[3] = LineFeature(ep4, ed4, edge_noise);
+			this->edges[3] = LineFeature(ep4, ed4, edge_r_noise, edge_t_noise);
 
 			Coord ep5;
 			ep5 << a / 2.0, 0.0, c / 2.0, 1.0;
@@ -273,7 +280,7 @@ namespace geometry_relation {
 			ed5 << 0.0, 1.0, 0.0, 0.0;
 			ep5 = this->Inner_transfrom_ * ep5;
 			ed5 = this->Inner_transfrom_ * ed5;
-			this->edges[4] = LineFeature(ep5, ed5, edge_noise);
+			this->edges[4] = LineFeature(ep5, ed5, edge_r_noise, edge_t_noise);
 
 			Coord ep6;
 			ep6 << a / 2.0, 0.0, -c / 2.0, 1.0;
@@ -281,7 +288,7 @@ namespace geometry_relation {
 			ed6 << 0.0, 1.0, 0.0, 0.0;
 			ep6 = this->Inner_transfrom_ * ep6;
 			ed6 = this->Inner_transfrom_ * ed6;
-			this->edges[5] = LineFeature(ep6, ed6, edge_noise);
+			this->edges[5] = LineFeature(ep6, ed6, edge_r_noise, edge_t_noise);
 
 			Coord ep7;
 			ep7 << -a / 2.0, 0.0, c / 2.0, 1.0;
@@ -289,7 +296,7 @@ namespace geometry_relation {
 			ed7 << 0.0, 1.0, 0.0, 0.0;
 			ep7 = this->Inner_transfrom_ * ep7;
 			ed7 = this->Inner_transfrom_ * ed7;
-			this->edges[6] = LineFeature(ep7, ed7, edge_noise);
+			this->edges[6] = LineFeature(ep7, ed7, edge_r_noise, edge_t_noise);
 
 			Coord ep8;
 			ep8 << -a / 2.0, 0.0, -c / 2.0, 1.0;
@@ -297,7 +304,7 @@ namespace geometry_relation {
 			ed8 << 0.0, 1.0, 0.0, 0.0;
 			ep8 = this->Inner_transfrom_ * ep8;
 			ed8 = this->Inner_transfrom_ * ed8;
-			this->edges[7] = LineFeature(ep8, ed8, edge_noise);
+			this->edges[7] = LineFeature(ep8, ed8, edge_r_noise, edge_t_noise);
 
 			Coord ep9;
 			ep9 << a / 2.0, b / 2.0, 0.0, 1.0;
@@ -305,7 +312,7 @@ namespace geometry_relation {
 			ed9 << 0.0, 0.0, 1.0, 0.0;
 			ep9 = this->Inner_transfrom_ * ep9;
 			ed9 = this->Inner_transfrom_ * ed9;
-			this->edges[8] = LineFeature(ep9, ed9, edge_noise);
+			this->edges[8] = LineFeature(ep9, ed9, edge_r_noise, edge_t_noise);
 
 			Coord ep10;
 			ep10 << a / 2.0, -b / 2.0, 0.0, 1.0;
@@ -313,7 +320,7 @@ namespace geometry_relation {
 			ed10 << 0.0, 0.0, 1.0, 0.0;
 			ep10 = this->Inner_transfrom_ * ep10;
 			ed10 = this->Inner_transfrom_ * ed10;
-			this->edges[9] = LineFeature(ep10, ed10, edge_noise);
+			this->edges[9] = LineFeature(ep10, ed10, edge_r_noise, edge_t_noise);
 
 			Coord ep11;
 			ep11 << -a / 2.0, b / 2.0, 0.0, 1.0;
@@ -321,7 +328,7 @@ namespace geometry_relation {
 			ed11 << 0.0, 0.0, 1.0, 0.0;
 			ep11 = this->Inner_transfrom_ * ep11;
 			ed11 = this->Inner_transfrom_ * ed11;
-			this->edges[10] = LineFeature(ep11, ed11, edge_noise);
+			this->edges[10] = LineFeature(ep11, ed11, edge_r_noise, edge_t_noise);
 
 			Coord ep12;
 			ep12 << -a / 2.0, -b / 2.0, 0.0, 1.0;
@@ -329,7 +336,7 @@ namespace geometry_relation {
 			ed12 << 0.0, 0.0, 1.0, 0.0;
 			ep12 = this->Inner_transfrom_ * ep12;
 			ed12 = this->Inner_transfrom_ * ed12;
-			this->edges[11] = LineFeature(ep12, ed12, edge_noise);
+			this->edges[11] = LineFeature(ep12, ed12, edge_r_noise, edge_t_noise);
 
 			// add into feature array:
 			for (int i = 0; i < 6; i++) {
@@ -385,13 +392,37 @@ namespace geometry_relation {
 			}
 		};
 
+        virtual void GenerateCoefficients(pcl::ModelCoefficients& coefficients, Transform& camera_pose) {
+            Transform pose_in_camera = camera_pose.inverse() * this->object_position_ * this->Inner_transfrom_;
+            
+            Eigen::Matrix3d object_rotation_matrix(pose_in_camera.block(0, 0, 3, 3));
+            Eigen::Quaterniond object_rotation(object_rotation_matrix);
+            Eigen::Vector3d object_transition(pose_in_camera.block(0, 3, 3, 1));
+            coefficients.values.resize(10);
+            coefficients.values[0] = object_transition(0);
+            coefficients.values[1] = object_transition(1);
+            coefficients.values[2] = object_transition(2);
+            
+            coefficients.values[3] = object_rotation.x();
+            coefficients.values[4] = object_rotation.y();
+            coefficients.values[5] = object_rotation.z();
+            coefficients.values[6] = object_rotation.w();
+
+            coefficients.values[7] = this->a_;
+            coefficients.values[8] = this->b_;
+            coefficients.values[9] = this->c_;
+ 
+        };
+
 		~Box() {
 			delete this->edges;
 			delete this->planes;
 		};
 		double a_, b_, c_;
-		double edge_noise = 0.1;
-		double plane_noise = 0.1;
+		double edge_t_noise = 0.03;
+        double edge_r_noise = 0.01;
+		double plane_t_noise = 0.03;
+        double plane_r_noise = 0.01;
 
 		LineFeature* edges;
 		PlaneFeature* planes;
@@ -408,9 +439,9 @@ namespace geometry_relation {
 			this->surfaces = new SurfaceFeature[1];
 
 			Coord p1;
-			p1 << 0.0, length / 2.0, 0.0, 1.0;
+			p1 << 0.0, 0.0, length / 2.0, 1.0;
 			Coord d1;
-			d1 << 0.0, 1.0, 0.0, 0.0;
+			d1 << 0.0, 0.0, 1.0, 0.0;
 
 			Coord dx1;
 			dx1 << 1.0, 0.0, 0.0, 0.0;
@@ -421,12 +452,12 @@ namespace geometry_relation {
 			d1 = this->Inner_transfrom_ * d1;
 			dx1 = this->Inner_transfrom_ * dx1;
 			dz1 = this->Inner_transfrom_ * dz1;
-			this->planes[0] = PlaneFeature(p1, d1, plane_noise, dx1, dz1);
+			this->planes[0] = PlaneFeature(p1, d1, plane_r_noise,  plane_t_noise, dx1, dz1);
 
 			Coord p2;
-			p2 << 0.0, -length / 2.0, 0.0, 1.0;
+			p2 << 0.0, 0.0, -length / 2.0, 1.0;
 			Coord d2;
-			d2 << 0.0, -1.0, 0.0, 0.0;
+			d2 << 0.0, 0.0, -1.0, 0.0;
 
 			Coord dx2;
 			dx2 << 1.0, 0.0, 0.0, 0.0;
@@ -437,15 +468,15 @@ namespace geometry_relation {
 			d2 = this->Inner_transfrom_ * d2;
 			dx2 = this->Inner_transfrom_ * dx2;
 			dz2 = this->Inner_transfrom_ * dz2;
-			this->planes[1] = PlaneFeature(p2, d2, plane_noise, dx2, dz2);
+			this->planes[1] = PlaneFeature(p2, d2, plane_r_noise,  plane_t_noise, dx2, dz2);
 
 			Coord p3;
 			p3 << 0.0, 0.0, 0.0, 1.0;
 			Coord d3;
-			d3 << 0.0, 1.0, 0.0, 0.0;
+			d3 << 0.0, 0.0, 1.0, 0.0;
 			p3 = this->Inner_transfrom_ * p3;
 			d3 = this->Inner_transfrom_ * d3;
-			this->surfaces[0] = SurfaceFeature(p3, d3, surface_noise, radius);
+			this->surfaces[0] = SurfaceFeature(p3, d3, surface_r_noise,  surface_t_noise, radius);
 
 			this->feature_array_[0] = &this->planes[0];
 			this->feature_array_[1] = &this->planes[1];
@@ -474,14 +505,37 @@ namespace geometry_relation {
 			}
 		};
 
+        virtual void GenerateCoefficients(pcl::ModelCoefficients& coefficients, Transform& camera_pose) {
+            Transform pose_in_camera = camera_pose.inverse() * this->object_position_ * this->Inner_transfrom_;
+            
+            Eigen::Matrix3d object_rotation_matrix(pose_in_camera.block(0, 0, 3, 3));
+            Eigen::Quaterniond object_rotation(object_rotation_matrix);
+            Eigen::Vector3d object_transition(pose_in_camera.block(0, 3, 3, 1));
+            coefficients.values.resize(10);
+            coefficients.values[0] = object_transition(0);
+            coefficients.values[1] = object_transition(1);
+            coefficients.values[2] = object_transition(2);
+            
+            coefficients.values[3] = object_rotation.x();
+            coefficients.values[4] = object_rotation.y();
+            coefficients.values[5] = object_rotation.z();
+            coefficients.values[6] = object_rotation.w();
+
+            coefficients.values[7] = this->radius_;
+            coefficients.values[8] = this->radius_;
+            coefficients.values[9] = this->length_;
+        };
+
 		~Cylinder() {
 			delete planes;
 			delete surfaces;
 		}
 
 		double length_, radius_;
-		double plane_noise = 0.1;
-		double surface_noise = 0.1;
+        double plane_t_noise = 0.03;
+        double plane_r_noise = 0.01;
+        double surface_t_noise = 0.03;
+        double surface_r_noise = 0.01;
 
 		PlaneFeature* planes;
 		SurfaceFeature* surfaces;
@@ -498,7 +552,7 @@ namespace geometry_relation {
 			Coord p1;
 			p1 << 0.0, 0.0, 0.0, 1.0;
 			Coord d1;
-			d1 << 0.0, 1.0, 0.0, 0.0;
+			d1 << 0.0, 0.0, 1.0, 0.0;
 
 			Coord dx1;
 			dx1 << 1.0, 0.0, 0.0, 0.0;
@@ -509,7 +563,7 @@ namespace geometry_relation {
 			d1 = this->Inner_transfrom_ * d1;
 			dx1 = this->Inner_transfrom_ * dx1;
 			dz1 = this->Inner_transfrom_ * dz1;
-			this->planes[0] = PlaneFeature(p1, d1, plane_noise, dx1, dz1);
+			this->planes[0] = PlaneFeature(p1, d1, plane_r_noise, plane_t_noise, dx1, dz1);
 			this->feature_array_[0] = &this->planes[0];
 
 		};
@@ -524,12 +578,24 @@ namespace geometry_relation {
 			this->feature_array_[0]->GenerateRenderPoints(render_points, this->object_position_, 50, dimension_scale);
 		};
 
+        virtual void GenerateCoefficients(pcl::ModelCoefficients& coefficients, Transform& camera_pose) {
+            Transform pose_in_camera = camera_pose.inverse() * this->object_position_ ;
+            Coord point_in_camera = pose_in_camera * this->planes[0].point_;
+            Coord direction_in_camera = pose_in_camera * this->planes[0].direction_;
+            
+            coefficients.values.resize(4);
+            coefficients.values[0] = direction_in_camera(0);
+            coefficients.values[1] = direction_in_camera(1);
+            coefficients.values[2] = direction_in_camera(2);
+            coefficients.values[3] = - point_in_camera.dot(direction_in_camera);
+        };
 		~Support() {
 			delete planes;
 		};
 
 		PlaneFeature* planes;
-		double plane_noise = 0.1;
+		double plane_t_noise = 0.03;
+        double plane_r_noise = 0.01;
 	};
 }
 
