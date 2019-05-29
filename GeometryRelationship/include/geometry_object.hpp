@@ -61,12 +61,10 @@ namespace geometry_relation {
 						*geometry_object.feature_array_[j], _temp_contact,
 						this->object_position_, geometry_object.object_position_,
                         _temp_individual_noise);
-					/*
+				
 					if (other_constraints_made[j])
 						continue;  // no same feature for different constraints.
-					*/
 					
-
 					// if feature contact, it will return a contact value
 					if (_temp_contact != unknown_contact) {
 						// log the local feature vector
@@ -104,7 +102,7 @@ namespace geometry_relation {
 
 #endif // _TEST_OUTPUT_ 
 						
-						// break;  // if plane-plane, then there no plane-edge.
+						break;  // if plane-plane, then there no plane-edge.
 						
 					}
                     _temp_individual_noise.clear();
@@ -120,7 +118,7 @@ namespace geometry_relation {
 
         virtual void GenerateCoefficients(pcl::ModelCoefficients& coefficients, Transform& camera_pose) = 0;
 		~GeometryObject() {
-			delete feature_array_;
+			delete[] feature_array_;
 		};
 		//
 
@@ -246,97 +244,160 @@ namespace geometry_relation {
 			ep1 << 0.0, b / 2.0, c / 2.0, 1.0;
 			Coord ed1;
 			ed1 << 1.0, 0.0, 0.0, 0.0;
+
+            Coord ed2_1;
+			ed2_1 << 0.0, b / 2.0, c / 2.0, 0.0;
+
 			ep1 = this->Inner_transfrom_ * ep1;
 			ed1 = this->Inner_transfrom_ * ed1;
-			this->edges[0] = LineFeature(ep1, ed1, edge_r_noise, edge_t_noise);
+            ed2_1 = this->Inner_transfrom_ * ed2_1;
+			this->edges[0] = LineFeature(ep1, ed1, ed2_1, edge_r_noise, edge_t_noise);
 
 			Coord ep2;
 			ep2 << 0.0, b / 2.0, -c / 2.0, 1.0;
 			Coord ed2;
 			ed2 << 1.0, 0.0, 0.0, 0.0;
+
+            Coord ed2_2;
+			ed2_2 << 0.0, b / 2.0, -c / 2.0, 0.0;
+
 			ep2 = this->Inner_transfrom_ * ep2;
 			ed2 = this->Inner_transfrom_ * ed2;
-			this->edges[1] = LineFeature(ep2, ed2, edge_r_noise, edge_t_noise);
+            ed2_2 = this->Inner_transfrom_ * ed2_2;
+			this->edges[1] = LineFeature(ep2, ed2, ed2_2, edge_r_noise, edge_t_noise);
 
 			Coord ep3;
 			ep3 << 0.0, -b / 2.0, c / 2.0, 1.0;
 			Coord ed3;
 			ed3 << 1.0, 0.0, 0.0, 0.0;
+
+            Coord ed2_3;
+			ed2_3 << 0.0, -b / 2.0, c / 2.0, 0.0;
+
 			ep3 = this->Inner_transfrom_ * ep3;
 			ed3 = this->Inner_transfrom_ * ed3;
-			this->edges[2] = LineFeature(ep3, ed3, edge_r_noise, edge_t_noise);
+            ed2_3 = this->Inner_transfrom_ * ed2_3;
+			this->edges[2] = LineFeature(ep3, ed3, ed2_3, edge_r_noise, edge_t_noise);
 
 			Coord ep4;
 			ep4 << 0.0, -b / 2.0, -c / 2.0, 1.0;
 			Coord ed4;
 			ed4 << 1.0, 0.0, 0.0, 0.0;
+
+            Coord ed2_4;
+			ed2_4 << 0.0, -b / 2.0, -c / 2.0, 0.0;
+
 			ep4 = this->Inner_transfrom_ * ep4;
 			ed4 = this->Inner_transfrom_ * ed4;
-			this->edges[3] = LineFeature(ep4, ed4, edge_r_noise, edge_t_noise);
+            ed2_4 = this->Inner_transfrom_ * ed2_4;
+			this->edges[3] = LineFeature(ep4, ed4, ed2_4, edge_r_noise, edge_t_noise);
 
 			Coord ep5;
 			ep5 << a / 2.0, 0.0, c / 2.0, 1.0;
 			Coord ed5;
 			ed5 << 0.0, 1.0, 0.0, 0.0;
-			ep5 = this->Inner_transfrom_ * ep5;
+
+            Coord ed2_5;
+			ed2_5 << a / 2.0, 0.0, c / 2.0, 0.0;
+			
+            ep5 = this->Inner_transfrom_ * ep5;
 			ed5 = this->Inner_transfrom_ * ed5;
-			this->edges[4] = LineFeature(ep5, ed5, edge_r_noise, edge_t_noise);
+            ed2_5 = this->Inner_transfrom_ * ed2_5;
+
+			this->edges[4] = LineFeature(ep5, ed5, ed2_5, edge_r_noise, edge_t_noise);
 
 			Coord ep6;
 			ep6 << a / 2.0, 0.0, -c / 2.0, 1.0;
 			Coord ed6;
 			ed6 << 0.0, 1.0, 0.0, 0.0;
+
+            Coord ed2_6;
+			ed2_6 << a / 2.0, 0.0, -c / 2.0, 0.0;
+
 			ep6 = this->Inner_transfrom_ * ep6;
 			ed6 = this->Inner_transfrom_ * ed6;
-			this->edges[5] = LineFeature(ep6, ed6, edge_r_noise, edge_t_noise);
+            ed2_6 = this->Inner_transfrom_ * ed2_6;
+
+			this->edges[5] = LineFeature(ep6, ed6, ed2_6, edge_r_noise, edge_t_noise);
 
 			Coord ep7;
 			ep7 << -a / 2.0, 0.0, c / 2.0, 1.0;
 			Coord ed7;
 			ed7 << 0.0, 1.0, 0.0, 0.0;
+
+            Coord ed2_7;
+			ed2_7 << -a / 2.0, 0.0, c / 2.0, 0.0;
+
 			ep7 = this->Inner_transfrom_ * ep7;
 			ed7 = this->Inner_transfrom_ * ed7;
-			this->edges[6] = LineFeature(ep7, ed7, edge_r_noise, edge_t_noise);
+            ed2_7 = this->Inner_transfrom_ * ed2_7;
+
+			this->edges[6] = LineFeature(ep7, ed7, ed2_7, edge_r_noise, edge_t_noise);
 
 			Coord ep8;
 			ep8 << -a / 2.0, 0.0, -c / 2.0, 1.0;
 			Coord ed8;
 			ed8 << 0.0, 1.0, 0.0, 0.0;
+
+            Coord ed2_8;
+			ed2_8 << -a / 2.0, 0.0, -c / 2.0, 0.0;
+
 			ep8 = this->Inner_transfrom_ * ep8;
 			ed8 = this->Inner_transfrom_ * ed8;
-			this->edges[7] = LineFeature(ep8, ed8, edge_r_noise, edge_t_noise);
+            ed2_8 = this->Inner_transfrom_ * ed2_8;
+			this->edges[7] = LineFeature(ep8, ed8, ed2_8, edge_r_noise, edge_t_noise);
 
 			Coord ep9;
 			ep9 << a / 2.0, b / 2.0, 0.0, 1.0;
 			Coord ed9;
 			ed9 << 0.0, 0.0, 1.0, 0.0;
+
+            Coord ed2_9;
+			ed2_9 << a / 2.0, b / 2.0, 0.0, 0.0;
+
 			ep9 = this->Inner_transfrom_ * ep9;
 			ed9 = this->Inner_transfrom_ * ed9;
-			this->edges[8] = LineFeature(ep9, ed9, edge_r_noise, edge_t_noise);
+            ed2_9 = this->Inner_transfrom_ * ed2_9;
+			this->edges[8] = LineFeature(ep9, ed9, ed2_9, edge_r_noise, edge_t_noise);
 
 			Coord ep10;
 			ep10 << a / 2.0, -b / 2.0, 0.0, 1.0;
 			Coord ed10;
 			ed10 << 0.0, 0.0, 1.0, 0.0;
+
+            Coord ed2_10;
+			ed2_10 << a / 2.0, -b / 2.0, 0.0, 0.0;
+
 			ep10 = this->Inner_transfrom_ * ep10;
 			ed10 = this->Inner_transfrom_ * ed10;
-			this->edges[9] = LineFeature(ep10, ed10, edge_r_noise, edge_t_noise);
+            ed2_10 = this->Inner_transfrom_ * ed2_10;
+			this->edges[9] = LineFeature(ep10, ed10, ed2_10, edge_r_noise, edge_t_noise);
 
 			Coord ep11;
 			ep11 << -a / 2.0, b / 2.0, 0.0, 1.0;
 			Coord ed11;
 			ed11 << 0.0, 0.0, 1.0, 0.0;
+
+            Coord ed2_11;
+			ed2_11 << -a / 2.0, b / 2.0, 0.0, 0.0;
+
 			ep11 = this->Inner_transfrom_ * ep11;
 			ed11 = this->Inner_transfrom_ * ed11;
-			this->edges[10] = LineFeature(ep11, ed11, edge_r_noise, edge_t_noise);
+            ed2_11 = this->Inner_transfrom_ * ed2_11;
+			this->edges[10] = LineFeature(ep11, ed11, ed2_11, edge_r_noise, edge_t_noise);
 
 			Coord ep12;
 			ep12 << -a / 2.0, -b / 2.0, 0.0, 1.0;
 			Coord ed12;
 			ed12 << 0.0, 0.0, 1.0, 0.0;
+
+            Coord ed2_12;
+			ed2_12 << -a / 2.0, -b / 2.0, 0.0, 0.0;
+
 			ep12 = this->Inner_transfrom_ * ep12;
 			ed12 = this->Inner_transfrom_ * ed12;
-			this->edges[11] = LineFeature(ep12, ed12, edge_r_noise, edge_t_noise);
+            ed2_12 = this->Inner_transfrom_ * ed2_12;
+			this->edges[11] = LineFeature(ep12, ed12, ed2_12, edge_r_noise, edge_t_noise);
 
 			// add into feature array:
 			for (int i = 0; i < 6; i++) {
@@ -415,13 +476,13 @@ namespace geometry_relation {
         };
 
 		~Box() {
-			delete this->edges;
-			delete this->planes;
+			delete[] this->edges;
+			delete[] this->planes;
 		};
 		double a_, b_, c_;
-		double edge_t_noise = 0.03;
+		double edge_t_noise = 0.01;
         double edge_r_noise = 0.01;
-		double plane_t_noise = 0.03;
+		double plane_t_noise = 0.01;
         double plane_r_noise = 0.01;
 
 		LineFeature* edges;
@@ -527,14 +588,14 @@ namespace geometry_relation {
         };
 
 		~Cylinder() {
-			delete planes;
-			delete surfaces;
+			delete[] planes;
+			delete[] surfaces;
 		}
 
 		double length_, radius_;
-        double plane_t_noise = 0.03;
+        double plane_t_noise = 0.01;
         double plane_r_noise = 0.01;
-        double surface_t_noise = 0.03;
+        double surface_t_noise = 0.01;
         double surface_r_noise = 0.01;
 
 		PlaneFeature* planes;
@@ -590,11 +651,11 @@ namespace geometry_relation {
             coefficients.values[3] = - point_in_camera.dot(direction_in_camera);
         };
 		~Support() {
-			delete planes;
+			delete[] planes;
 		};
 
 		PlaneFeature* planes;
-		double plane_t_noise = 0.03;
+		double plane_t_noise = 0.01;
         double plane_r_noise = 0.01;
 	};
 }

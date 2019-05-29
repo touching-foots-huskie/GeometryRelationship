@@ -85,19 +85,24 @@ namespace geometry_relation{
 				shared_ptr<GeometryObject> new_obj_ptr = make_shared <Box>(dimension_scale[0],
 					dimension_scale[1], dimension_scale[2], transform_inside);
 				objects[object_id] = new_obj_ptr;
+                objects[object_id]->SetPosition(initial_pose);
 				break;
 			}
 			case cylinder: {
 				shared_ptr<GeometryObject> new_obj_ptr = make_shared <Cylinder>(dimension_scale[0],
 					dimension_scale[1], transform_inside);
 				objects[object_id] = new_obj_ptr;
+                objects[object_id]->SetPosition(initial_pose);
 				break;
 			}
 			case support: {
 				shared_ptr<GeometryObject> new_obj_ptr = make_shared <Support>(transform_inside);
 				objects[object_id] = new_obj_ptr;
+                objects[object_id]->SetPosition(initial_pose);
 				break;
 			}
+            default:
+                break;
 			}
 			
 		};
@@ -187,6 +192,41 @@ void ShowGeometry(geometry_relation::RelationInference& inferencer, geometry_rel
         }
         object_id += 1;
     }
+    viewer_.spin();
+};
+
+void ShowGeometry(geometry_relation::RelationInference& inferencer, geometry_relation::Transform& camera_pose,
+        pcl::PointCloud<pcl::PointXYZ>::Ptr& point_cloud) {
+    // show estimated geometry relationship in current camera pose
+    int object_id = 0;
+    pcl::visualization::PCLVisualizer viewer_;
+    viewer_.setSize(600, 800);
+    for (auto object : inferencer.objects) {
+        pcl::ModelCoefficients coefficients;
+        std::string id_string = to_string(object_id);
+        object.second->GenerateCoefficients(coefficients, camera_pose);
+        // case into float 
+        switch(object.second->geometry_type_) {
+            case geometry_relation::box : {
+                viewer_.addCube(coefficients, id_string);
+                break;
+            }
+
+            case geometry_relation::cylinder : {
+                viewer_.addCube(coefficients, id_string);
+                break;
+            }
+            case geometry_relation::support : {
+                viewer_.addPlane(coefficients, id_string);
+                break;
+            }
+            default :
+                break;
+        }
+        object_id += 1;
+    };
+
+    viewer_.addPointCloud(point_cloud, "point_cloud");
     viewer_.spin();
 };
 

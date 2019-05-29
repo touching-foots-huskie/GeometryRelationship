@@ -48,6 +48,11 @@ namespace geometry_relation {
 			    point_(point), direction_(direction), feature_type_(feature_type), rotation_noise_bound_(rotation_noise_bound),
                     transition_noise_bound_(transition_noise_bound){};
 
+        GeometryFeature(Coord point, Coord direction, Coord direction2, ENUM_GEOMETRY_FEATURE feature_type, double rotation_noise_bound,
+            double transition_noise_bound) :
+			    point_(point), direction_(direction), direction2_(direction2), feature_type_(feature_type), rotation_noise_bound_(rotation_noise_bound),
+                    transition_noise_bound_(transition_noise_bound){};
+
 		GeometryFeature(Coord point, Coord direction, ENUM_GEOMETRY_FEATURE feature_type, double rotation_noise_bound,
             double transition_noise_bound, double other_value1) :
 			    point_(point), direction_(direction), feature_type_(feature_type), rotation_noise_bound_(rotation_noise_bound),
@@ -57,6 +62,7 @@ namespace geometry_relation {
 			this->feature_type_ = obj.feature_type_;
 			this->point_ = obj.point_;
 			this->direction_ = obj.direction_;
+            this->direction2_ = obj.direction2_;
 			this->transition_noise_bound_ = obj.transition_noise_bound_;
             this->rotation_noise_bound_ = obj.rotation_noise_bound_;
 			this->other_value1_ = obj.other_value1_;
@@ -71,6 +77,7 @@ namespace geometry_relation {
 		
 		Coord point_;  // the unique representation for geometry feature
 		Coord direction_;
+        Coord direction2_;
 
         ENUM_GEOMETRY_FEATURE feature_type_;
 		double rotation_noise_bound_;
@@ -85,7 +92,9 @@ namespace geometry_relation {
 		LineFeature() : GeometryFeature() {};
 		LineFeature(Coord point, Coord direction, double rotation_noise_bound,
             double transition_noise_bound) : GeometryFeature(point, direction, line, rotation_noise_bound, transition_noise_bound) {};
-		LineFeature(const LineFeature& obj) : GeometryFeature(obj) {};
+        LineFeature(Coord point, Coord direction, Coord direction2, double rotation_noise_bound,
+            double transition_noise_bound) : GeometryFeature(point, direction, direction2, line, rotation_noise_bound, transition_noise_bound) {};
+		LineFeature(const LineFeature& obj) : GeometryFeature(obj){};
 		
 		virtual double Contact(GeometryFeature& geometry_feature, ENUM_CONTACT& contact_type,
 			Transform pose_estimation1, Transform pose_estimation2, std::vector<double>& individual_noise) override {
@@ -93,8 +102,9 @@ namespace geometry_relation {
 			Coord world_point2 = pose_estimation2 * geometry_feature.point_;
 			Coord world_direction1 = pose_estimation1 * this->direction_;
 			Coord world_direction2 = pose_estimation2 * geometry_feature.direction_;
+            Coord world_direction_out = pose_estimation1 * this->direction2_;
 
-			double direction_error, point_error, total_error;
+			double direction_error, point_error, total_error, supporting_relationship;
 			Coord o1o2;
 
 			switch (geometry_feature.feature_type_)
@@ -117,9 +127,12 @@ namespace geometry_relation {
 				point_error = abs(o1o2.dot(world_direction2));
 				total_error = direction_error + point_error;
 
+                // if supporting each other, supporting relationship should be less than 0
+                supporting_relationship = world_direction_out.dot(world_direction2);
                 individual_noise.push_back(direction_error);
                 individual_noise.push_back(point_error);
-				if ((direction_error < this->rotation_noise_bound_) && (point_error < this->transition_noise_bound_))
+				if ((direction_error < this->rotation_noise_bound_) && (point_error < this->transition_noise_bound_)
+                        &&(supporting_relationship < 0))
 					contact_type = line_plane;
 				else
 					contact_type = unknown_contact;
@@ -166,7 +179,7 @@ namespace geometry_relation {
 		PlaneFeature(Coord point, Coord direction, double rotation_noise_bound,
             double transition_noise_bound, Coord x_axis, Coord z_axis) : 
 			GeometryFeature(point, direction, plane, rotation_noise_bound, transition_noise_bound), x_axis_(x_axis), z_axis_(z_axis) {};
-		PlaneFeature(const PlaneFeature& obj) : GeometryFeature(obj) {};
+		PlaneFeature(const PlaneFeature& obj) : GeometryFeature(obj), x_axis_(obj.x_axis_), z_axis_(obj.z_axis_) {};
 		
 		virtual double Contact(GeometryFeature& geometry_feature, ENUM_CONTACT& contact_type,
 			Transform pose_estimation1, Transform pose_estimation2, std::vector<double>& individual_noise) override {
@@ -174,8 +187,8 @@ namespace geometry_relation {
 			Coord world_point2 = pose_estimation2 * geometry_feature.point_;
 			Coord world_direction1 = pose_estimation1 * this->direction_;
 			Coord world_direction2 = pose_estimation2 * geometry_feature.direction_;
-
-			double direction_error, point_error, total_error;
+            Coord world_direction_out;  // in case for line feature
+			double direction_error, point_error, total_error, supporting_relationship;
 			Coord o1o2;
 			Coord moved_point;
 
@@ -187,7 +200,9 @@ namespace geometry_relation {
 			}
 
 			case line: {
-
+                
+                world_direction_out = pose_estimation2 * geometry_feature.direction2_;
+                supporting_relationship = world_direction_out.dot(world_direction1);
 				// we want two normals to be orthogonal to each other
 				direction_error = abs(world_direction1.dot(world_direction2));
 				o1o2 = world_point2 - world_point1;
@@ -197,7 +212,8 @@ namespace geometry_relation {
 
                 individual_noise.push_back(direction_error);
                 individual_noise.push_back(point_error);
-				if ((direction_error < this->rotation_noise_bound_) && (point_error < this->transition_noise_bound_))
+				if ((direction_error < this->rotation_noise_bound_) && (point_error < this->transition_noise_bound_)
+                        &&(supporting_relationship < 0))
 					contact_type = plane_line;
 				else
 					contact_type = unknown_contact;
@@ -255,9 +271,7 @@ namespace geometry_relation {
 			double length = dimension_scale[0];
 			double width = dimension_scale[1];
 
-			double _r = sqrt(length * width);
 			Coord world_point = pose_estimation * this->point_;
-			Coord world_direction = pose_estimation * this->direction_;
 			Coord world_x_axis = pose_estimation * this->x_axis_;
 			Coord world_z_axis = pose_estimation * this->z_axis_;
 
@@ -350,7 +364,6 @@ namespace geometry_relation {
 			Coord world_point = pose_estimation * this->point_;
 			Coord world_direction = pose_estimation * this->direction_;
 			double height = dimension_scale[0];
-			double radius = dimension_scale[1];
 			double height_gap = height / render_points_num;
 			double theta_gap = M_PI / render_points_num;
 			std::vector<Coord> points_in_circle;
