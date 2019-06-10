@@ -480,10 +480,10 @@ namespace geometry_relation {
 			delete[] this->planes;
 		};
 		double a_, b_, c_;
-		double edge_t_noise = 0.01;
-        double edge_r_noise = 0.01;
-		double plane_t_noise = 0.01;
-        double plane_r_noise = 0.01;
+		double edge_t_noise = 0.03;
+        double edge_r_noise = 0.03;
+		double plane_t_noise = 0.03;
+        double plane_r_noise = 0.03;
 
 		LineFeature* edges;
 		PlaneFeature* planes;
@@ -655,8 +655,8 @@ namespace geometry_relation {
 		};
 
 		PlaneFeature* planes;
-		double plane_t_noise = 0.01;
-        double plane_r_noise = 0.01;
+		double plane_t_noise = 0.03;
+        double plane_r_noise = 0.03;
 	};
 }
 
