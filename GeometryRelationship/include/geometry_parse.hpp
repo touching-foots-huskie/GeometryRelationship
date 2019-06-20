@@ -2,7 +2,8 @@
 #include <iostream>
 #include <string>
 #include <map>
-#include <Eigen/Eigen>
+#include <unistd.h>
+#include <Eigen/Core>
 #include "geometry_object.hpp"
 
 using namespace std;
