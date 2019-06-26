@@ -132,6 +132,8 @@ namespace geometry_relation {
 
 	class Box : public GeometryObject
 	{
+
+    // box is special : including 3d bounding box
 	public:
 		Box(double a, double b, double c, Transform inner_transform) : 
 			GeometryObject(box, Transform::Identity(), inner_transform), a_(a), b_(b), c_(c)
