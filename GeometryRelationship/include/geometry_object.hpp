@@ -1,6 +1,7 @@
 #include <map>
 #include <vector>
 #include <memory>
+#include <unistd.h>
 #include <Eigen/Core>
 #include <iostream>
 #include "geometry_feature.hpp"

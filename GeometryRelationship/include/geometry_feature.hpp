@@ -1,5 +1,6 @@
 #include <math.h>
 #include <vector>
+#include <unistd.h>
 #include <Eigen/Core>
 #include <iostream>
 
