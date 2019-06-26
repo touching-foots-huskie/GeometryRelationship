@@ -13,6 +13,7 @@
 #include "geometry_feature.hpp"
 #include "measure_parse.hpp"
 #include "pointcloud_log.hpp"
+#include "box_overlap.hpp"
 
 
 int main()
@@ -93,7 +94,19 @@ int main()
         vis_points_in_pcl(logged_points, "/home/harvey/CppProjects/GeometryRelationship/GeometryRelationship/data/Contact_" + std::to_string(i));
 	}
     */
-    ShowGeometry(relation_inferencer, robot_pose);
-	// Generate a set of points.
+    // ShowGeometry(relation_inferencer, robot_pose);
+    geometry_relation::Coord_vector points_1;
+    geometry_relation::Coord_vector points_2;
+    geometry_relation::Coord_vector axis_1; 
+    geometry_relation::Coord_vector axis_2;
+    std::cout << relation_inferencer.objects[2]->object_position_ << std::endl;
+    geometry_relation::get_data_from_box(relation_inferencer.objects[2]->object_position_, 0.1, 0.1, 0.1, points_1, axis_1);
+    
+    std::cout << relation_inferencer.objects[4]->object_position_ << std::endl;
+    geometry_relation::get_data_from_box(relation_inferencer.objects[4]->object_position_, 0.1, 0.1, 0.1, points_2, axis_2);
+	
+    double overlap = geometry_relation::seperate_axis_overlap(points_1, points_2, axis_1, axis_2);
+    std::cout << overlap << std::endl;
+    // Generate a set of points.
 	return 0;
 }

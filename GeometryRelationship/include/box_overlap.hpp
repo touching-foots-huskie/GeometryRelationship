@@ -12,7 +12,7 @@ namespace geometry_relation {
 
     using Coord_vector = std::vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d> >;
 
-    void get_data_from_box(Transform box_pose, double a, double b, double c, Coord_vector& points, Coord_vector& axis) {
+    void get_data_from_box(Eigen::Matrix4d box_pose, double a, double b, double c, Coord_vector& points, Coord_vector& axis) {
         // a , b, c are length, width, height
         Coord p1, p2, p3, p4, p5, p6, p7, p8;
         p1 << a / 2.0, b / 2.0, c / 2.0, 1.0;
@@ -55,27 +55,6 @@ namespace geometry_relation {
         axis.push_back(ax1.block(0, 0, 3, 1));
         axis.push_back(ax2.block(0, 0, 3, 1));
         axis.push_back(ax3.block(0, 0, 3, 1));
-    };
-
-    double seperate_axis_overlap(Coord_vector& points_box_1, Coord_vector& points_box_2,
-        Coord_vector& axis_box_1, Coord_vector& axis_box_2) {
-        
-        double overlap_ratio_1 = 1.0;
-        double overlap_ratio_2 = 1.0;
-
-        // check for axis in 1
-        for(auto axis_1 : axis_box_1) {
-            if( !overlap_in_axis(axis_1, points_box_1, points_box_2, overlap_ratio_1, overlap_ratio_2) ) 
-                return 0.0;
-        }
-
-        // check for axis in 2
-        for(auto axis_2 : axis_box_1) {
-            if( !overlap_in_axis(axis_2, points_box_1, points_box_2, overlap_ratio_1, overlap_ratio_2) ) 
-                return 0.0;
-        }
-
-        return std::max(overlap_ratio_1, overlap_ratio_2);
     };
 
     bool overlap_in_axis(Eigen::Vector3d& projection_axis, Coord_vector& points_box_1, Coord_vector& points_box_2,
@@ -131,6 +110,26 @@ namespace geometry_relation {
         }
     };
 
+    double seperate_axis_overlap(Coord_vector& points_box_1, Coord_vector& points_box_2,
+        Coord_vector& axis_box_1, Coord_vector& axis_box_2) {
+        
+        double overlap_ratio_1 = 1.0;
+        double overlap_ratio_2 = 1.0;
+
+        // check for axis in 1
+        for(auto axis_1 : axis_box_1) {
+            if( !overlap_in_axis(axis_1, points_box_1, points_box_2, overlap_ratio_1, overlap_ratio_2) ) 
+                return 0.0;
+        }
+
+        // check for axis in 2
+        for(auto axis_2 : axis_box_1) {
+            if( !overlap_in_axis(axis_2, points_box_1, points_box_2, overlap_ratio_1, overlap_ratio_2) ) 
+                return 0.0;
+        }
+
+        return std::max(overlap_ratio_1, overlap_ratio_2);
+    };
 };
 
 #endif
