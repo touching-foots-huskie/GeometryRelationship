@@ -63,7 +63,7 @@ namespace geometry_relation{
 			}
 		};
 
-		void UpdateObjects(std::map<unsigned int, Transform> object_estimations) {
+		void UpdateObjects(std::map<int, Transform> object_estimations) {
 			// update all estimations after estimation
 			for (auto it = object_estimations.begin(); it != object_estimations.end(); ++it)
 			{
@@ -71,11 +71,11 @@ namespace geometry_relation{
 			}
 		};
 
-		void UpdateObject(unsigned int object_id, Transform object_estimation) {
+		void UpdateObject(int object_id, Transform object_estimation) {
 			objects[object_id]->SetPosition(object_estimation);
 		};
 
-		void AddObject(unsigned int object_id, unsigned int object_class, Transform initial_pose) {
+		void AddObject(int object_id, int object_class, Transform initial_pose) {
 			shared_ptr<GeometryObject> object_ptr = this->template_objects_in_class[object_class];
 			std::vector<double> dimension_scale;
 			Transform transform_inside;
@@ -107,13 +107,13 @@ namespace geometry_relation{
 			
 		};
 
-		bool Isin(unsigned int object_id) {
-			unsigned int id_times = this->objects.count(object_id);
+		bool Isin(int object_id) {
+			int id_times = this->objects.count(object_id);
 			return !(id_times == 0);  // no means not in
 
 		};
 
-		void InferenceRelationship(std::vector<unsigned int>& objects_id1, std::vector<unsigned int>& objects_id2,
+		void InferenceRelationship(std::vector<int>& objects_id1, std::vector<int>& objects_id2,
 								std::vector<ENUM_CONTACT>& contact_type_vector,
 								std::vector<Coord>& feature_point_1, std::vector<Coord>& feature_point_2,
 								std::vector<Coord>& feature_direction_1, std::vector<Coord>& feature_direction_2,
@@ -156,8 +156,8 @@ namespace geometry_relation{
 			}
 		};
          
-		std::map<unsigned int, shared_ptr<GeometryObject> > objects;  // id : objects
-		std::map<unsigned int, shared_ptr<GeometryObject> > template_objects_in_class;
+		std::map<int, shared_ptr<GeometryObject> > objects;  // id : objects
+		std::map<int, shared_ptr<GeometryObject> > template_objects_in_class;
         
 	};
 };
