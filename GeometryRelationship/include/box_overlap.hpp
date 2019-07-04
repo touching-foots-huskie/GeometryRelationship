@@ -123,7 +123,7 @@ namespace geometry_relation {
         }
 
         // check for axis in 2
-        for(auto axis_2 : axis_box_1) {
+        for(auto axis_2 : axis_box_2) {
             if( !overlap_in_axis(axis_2, points_box_1, points_box_2, overlap_ratio_1, overlap_ratio_2) ) 
                 return 0.0;
         }
