@@ -56,8 +56,12 @@ namespace geometry_relation {
             
             std::vector<double> _temp_individual_noise;
 
+			if (geometry_type_ == cylinder || geometry_object.geometry_type_ == cylinder){
+				return false;
+			}
 			for (int i = 0; i < this->feature_num; i++) {
 				for (int j = 0; j < geometry_object.feature_num; j++) {
+					
 					_temp_noise_level = this->feature_array_[i]->Contact(
 						*geometry_object.feature_array_[j], _temp_contact,
 						this->object_position_, geometry_object.object_position_,
@@ -136,6 +140,26 @@ namespace geometry_relation {
 
     // box is special : including 3d bounding box
 	public:
+		void get_data_from_plane(Coord p1, Coord p2, Coord p3, Coord p4, Coord_vector4& points){
+			points.clear();
+			/* 
+			points.push_back(p1.block(0, 0, 3, 1));
+			points.push_back(p2.block(0, 0, 3, 1));
+			points.push_back(p3.block(0, 0, 3, 1));
+			points.push_back(p4.block(0, 0, 3, 1));
+			*/
+			points.push_back(p1);
+			points.push_back(p2);
+			points.push_back(p3);
+			points.push_back(p4);
+		};
+
+		void get_data_from_line(Coord p1, Coord p2, Coord_vector4& points){
+			points.clear();
+			points.push_back(p1);
+			points.push_back(p2);
+		};
+
 		Box(double a, double b, double c, Transform inner_transform) : 
 			GeometryObject(box, Transform::Identity(), inner_transform), a_(a), b_(b), c_(c)
 		{
@@ -143,13 +167,26 @@ namespace geometry_relation {
 			this->feature_array_ = new GeometryFeature * [18];
 			this->edges = new LineFeature[12];
 			this->planes = new PlaneFeature[6];
-
+			
 			// 6 planes:
 			Coord p1;
 			p1 << a / 2.0, 0.0, 0.0, 1.0;
-			Coord d1;
-			d1 << 1.0, 0.0, 0.0, 0.0;
+			
+			Coord pc1, pc2, pc3, pc4; //corner point of this plane
+			pc1 <<a / 2.0, b / 2.0, -c / 2.0, 1.0; 
+			pc2 <<a / 2.0, b / 2.0, c / 2.0, 1.0; 
+			pc3 <<a / 2.0, -b / 2.0, c / 2.0, 1.0; 
+			pc4 <<a / 2.0, -b / 2.0, -c / 2.0, 1.0; 
+			pc1 = this->Inner_transfrom_ * pc1;
+			pc2 = this->Inner_transfrom_ * pc2;
+			pc3 = this->Inner_transfrom_ * pc3;
+			pc4 = this->Inner_transfrom_ * pc4;
 
+			Coord_vector4 points1;
+			get_data_from_plane(pc1, pc2, pc3, pc4, points1);
+
+			Coord d1;//plane normal direction 
+			d1 << 1.0, 0.0, 0.0, 0.0;
 			Coord dx1;
 			dx1 << 0.0, 1.0, 0.0, 0.0;
 			Coord dz1;
@@ -157,12 +194,26 @@ namespace geometry_relation {
 			// Transform into estimation coords
 			p1 = this->Inner_transfrom_ * p1;
 			d1 = this->Inner_transfrom_ * d1;
-			dx1 = this->Inner_transfrom_ * dx1;
-			dz1 = this->Inner_transfrom_ * dz1;
-			this->planes[0] = PlaneFeature(p1, d1, plane_r_noise, plane_t_noise, dx1, dz1);
+			dx1 =this->Inner_transfrom_ * dx1;
+			dz1 =this->Inner_transfrom_ * dz1;
+			this->planes[0] = PlaneFeature(p1, d1, plane_r_noise, plane_t_noise, dx1, dz1, points1);// use dx1 and dz1 for overlapping check
 
 			Coord p2;
 			p2 << -a / 2.0, 0.0, 0.0, 1.0;
+
+			pc1 <<-a / 2.0, b / 2.0, -c / 2.0, 1.0; 
+			pc2 <<-a / 2.0, b / 2.0, c / 2.0, 1.0; 
+			pc3 <<-a / 2.0, -b / 2.0, c / 2.0, 1.0; 
+			pc4 <<-a / 2.0, -b / 2.0, -c / 2.0, 1.0; 
+
+			pc1 = this->Inner_transfrom_ * pc1;
+			pc2 = this->Inner_transfrom_ * pc2;
+			pc3 = this->Inner_transfrom_ * pc3;
+			pc4 = this->Inner_transfrom_ * pc4;
+
+			Coord_vector4 points2;
+			get_data_from_plane(pc1, pc2, pc3, pc4, points2);
+
 			Coord d2;
 			d2 << -1.0, 0.0, 0.0, 0.0;
 
@@ -170,15 +221,28 @@ namespace geometry_relation {
 			dx2 << 0.0, 1.0, 0.0, 0.0;
 			Coord dz2;
 			dz2 = d2.cross3(dx2);
-
+			
 			p2 = this->Inner_transfrom_ * p2;
 			d2 = this->Inner_transfrom_ * d2;
 			dx2 = this->Inner_transfrom_ * dx2;
 			dz2 = this->Inner_transfrom_ * dz2;
-			this->planes[1] = PlaneFeature(p2, d2, plane_r_noise, plane_t_noise, dx2, dz2);
+			this->planes[1] = PlaneFeature(p2, d2, plane_r_noise, plane_t_noise, dx2, dz2, points2);
 
 			Coord p3;
 			p3 << 0.0, b / 2.0, 0.0, 1.0;
+
+			pc1 <<a / 2.0, b / 2.0, c / 2.0, 1.0; 
+			pc2 <<a / 2.0, b / 2.0, -c / 2.0, 1.0; 
+			pc3 <<-a / 2.0, b / 2.0, -c / 2.0, 1.0; 
+			pc4 <<-a / 2.0, b / 2.0, c / 2.0, 1.0; 
+			pc1 = this->Inner_transfrom_ * pc1;
+			pc2 = this->Inner_transfrom_ * pc2;
+			pc3 = this->Inner_transfrom_ * pc3;
+			pc4 = this->Inner_transfrom_ * pc4;
+
+			Coord_vector4 points3;
+			get_data_from_plane(pc1, pc2, pc3, pc4, points3);
+
 			Coord d3;
 			d3 << 0.0, 1.0, 0.0, 0.0;
 
@@ -191,10 +255,23 @@ namespace geometry_relation {
 			d3 = this->Inner_transfrom_ * d3;
 			dx3 = this->Inner_transfrom_ * dx3;
 			dz3 = this->Inner_transfrom_ * dz3;
-			this->planes[2] = PlaneFeature(p3, d3, plane_r_noise, plane_t_noise, dx3, dz3);
+			this->planes[2] = PlaneFeature(p3, d3, plane_r_noise, plane_t_noise, dx3, dz3, points3);
 
 			Coord p4;
 			p4 << 0.0, -b / 2.0, 0.0, 1.0;
+
+
+			pc1 <<a / 2.0, -b / 2.0, c / 2.0, 1.0; 
+			pc2 <<a / 2.0, -b / 2.0, -c / 2.0, 1.0; 
+			pc3 <<-a / 2.0, -b / 2.0, -c / 2.0, 1.0; 
+			pc4 <<-a / 2.0, -b / 2.0, c / 2.0, 1.0; 
+			pc1 = this->Inner_transfrom_ * pc1;
+			pc2 = this->Inner_transfrom_ * pc2;
+			pc3 = this->Inner_transfrom_ * pc3;
+			pc4 = this->Inner_transfrom_ * pc4;
+			Coord_vector4 points4;
+			get_data_from_plane(pc1, pc2, pc3, pc4, points4);
+
 			Coord d4;
 			d4 << 0.0, -1.0, 0.0, 0.0;
 
@@ -207,10 +284,22 @@ namespace geometry_relation {
 			d4 = this->Inner_transfrom_ * d4;
 			dx4 = this->Inner_transfrom_ * dx4;
 			dz4 = this->Inner_transfrom_ * dz4;
-			this->planes[3] = PlaneFeature(p4, d4, plane_r_noise, plane_t_noise, dx4, dz4);
+			this->planes[3] = PlaneFeature(p4, d4, plane_r_noise, plane_t_noise, dx4, dz4, points4);
 
 			Coord p5;
 			p5 << 0.0, 0.0, c / 2.0, 1.0;
+
+			pc1 <<a / 2.0, b / 2.0, c / 2.0, 1.0; 
+			pc2 <<a / 2.0, -b / 2.0, c / 2.0, 1.0; 
+			pc3 <<-a / 2.0, -b / 2.0, c / 2.0, 1.0; 
+			pc4 <<-a / 2.0, b / 2.0, c / 2.0, 1.0; 
+			pc1 = this->Inner_transfrom_ * pc1;
+			pc2 = this->Inner_transfrom_ * pc2;
+			pc3 = this->Inner_transfrom_ * pc3;
+			pc4 = this->Inner_transfrom_ * pc4;
+			Coord_vector4 points5;
+			get_data_from_plane(pc1, pc2, pc3, pc4, points5);
+	
 			Coord d5;
 			d5 << 0.0, 0.0, 1.0, 0.0;
 
@@ -224,10 +313,23 @@ namespace geometry_relation {
 			dx5 = this->Inner_transfrom_ * dx5;
 			dz5 = this->Inner_transfrom_ * dz5;
 
-			this->planes[4] = PlaneFeature(p5, d5, plane_r_noise, plane_t_noise, dx5, dz5);
+			this->planes[4] = PlaneFeature(p5, d5, plane_r_noise, plane_t_noise, dx5, dz5, points5);
 
 			Coord p6;
 			p6 << 0.0, 0.0, -c / 2.0, 1.0;
+
+			pc1 <<a / 2.0, b / 2.0, -c / 2.0, 1.0; 
+			pc2 <<a / 2.0, -b / 2.0, -c / 2.0, 1.0; 
+			pc3 <<-a / 2.0, -b / 2.0, -c / 2.0, 1.0; 
+			pc4 <<-a / 2.0, b / 2.0, -c / 2.0, 1.0; 
+			pc1 = this->Inner_transfrom_ * pc1;
+			pc2 = this->Inner_transfrom_ * pc2;
+			pc3 = this->Inner_transfrom_ * pc3;
+			pc4 = this->Inner_transfrom_ * pc4;
+
+			Coord_vector4 points6;
+			get_data_from_plane(pc1, pc2, pc3, pc4, points6);
+
 			Coord d6;
 			d6 << 0.0, 0.0, -1.0, 0.0;
 
@@ -240,11 +342,16 @@ namespace geometry_relation {
 			d6 = this->Inner_transfrom_ * d6;
 			dx6 = this->Inner_transfrom_ * dx6;
 			dz6 = this->Inner_transfrom_ * dz6;
-			this->planes[5] = PlaneFeature(p6, d6, plane_r_noise, plane_t_noise, dx6, dz6);
+			this->planes[5] = PlaneFeature(p6, d6, plane_r_noise, plane_t_noise, dx6, dz6, points6);
 
 			// 12 lines:
 			Coord ep1;
 			ep1 << 0.0, b / 2.0, c / 2.0, 1.0;
+			// two end points 
+			Coord ep1_1, ep1_2; 
+			ep1_1 << a / 2.0, b / 2.0, c / 2.0, 1.0;
+			ep1_2 << -a / 2.0, b / 2.0, c / 2.0, 1.0;
+
 			Coord ed1;
 			ed1 << 1.0, 0.0, 0.0, 0.0;
 
@@ -252,12 +359,24 @@ namespace geometry_relation {
 			ed2_1 << 0.0, b / 2.0, c / 2.0, 0.0;
 
 			ep1 = this->Inner_transfrom_ * ep1;
+			ep1_1 = this->Inner_transfrom_ * ep1_1;
+			ep1_2 = this->Inner_transfrom_ * ep1_2;
+
 			ed1 = this->Inner_transfrom_ * ed1;
             ed2_1 = this->Inner_transfrom_ * ed2_1;
-			this->edges[0] = LineFeature(ep1, ed1, ed2_1, edge_r_noise, edge_t_noise);
+			Coord_vector4 end_points1; 
+			get_data_from_line(ep1_1, ep1_2, end_points1);
+			this->edges[0] = LineFeature(ep1, ed1, ed2_1, edge_r_noise, edge_t_noise, end_points1);
 
 			Coord ep2;
 			ep2 << 0.0, b / 2.0, -c / 2.0, 1.0;
+
+			Coord ep2_1, ep2_2; 
+			ep2_1 << a / 2.0, b / 2.0, -c / 2.0, 1.0;
+			ep2_2 << -a / 2.0, b / 2.0, -c / 2.0, 1.0;
+			Coord_vector4 end_points2;
+			get_data_from_line(ep2_1,ep2_2, end_points2);
+
 			Coord ed2;
 			ed2 << 1.0, 0.0, 0.0, 0.0;
 
@@ -267,10 +386,17 @@ namespace geometry_relation {
 			ep2 = this->Inner_transfrom_ * ep2;
 			ed2 = this->Inner_transfrom_ * ed2;
             ed2_2 = this->Inner_transfrom_ * ed2_2;
-			this->edges[1] = LineFeature(ep2, ed2, ed2_2, edge_r_noise, edge_t_noise);
+			this->edges[1] = LineFeature(ep2, ed2, ed2_2, edge_r_noise, edge_t_noise, end_points2);
 
 			Coord ep3;
 			ep3 << 0.0, -b / 2.0, c / 2.0, 1.0;
+
+			Coord ep3_1, ep3_2; 
+			ep3_1 << a / 2.0, -b / 2.0, c / 2.0, 1.0;
+			ep3_2 << -a / 2.0, -b / 2.0, c / 2.0, 1.0;
+			Coord_vector4 end_points3;
+			get_data_from_line(ep3_1,ep3_2, end_points3);
+
 			Coord ed3;
 			ed3 << 1.0, 0.0, 0.0, 0.0;
 
@@ -280,10 +406,17 @@ namespace geometry_relation {
 			ep3 = this->Inner_transfrom_ * ep3;
 			ed3 = this->Inner_transfrom_ * ed3;
             ed2_3 = this->Inner_transfrom_ * ed2_3;
-			this->edges[2] = LineFeature(ep3, ed3, ed2_3, edge_r_noise, edge_t_noise);
+			this->edges[2] = LineFeature(ep3, ed3, ed2_3, edge_r_noise, edge_t_noise, end_points3);
 
 			Coord ep4;
 			ep4 << 0.0, -b / 2.0, -c / 2.0, 1.0;
+
+			Coord ep4_1, ep4_2; 
+			ep4_1 << a / 2.0, -b / 2.0, -c / 2.0, 1.0;
+			ep4_2 << -a / 2.0, -b / 2.0, -c / 2.0, 1.0;
+			Coord_vector4 end_points4;
+			get_data_from_line(ep4_1,ep4_2, end_points4);
+			
 			Coord ed4;
 			ed4 << 1.0, 0.0, 0.0, 0.0;
 
@@ -293,10 +426,17 @@ namespace geometry_relation {
 			ep4 = this->Inner_transfrom_ * ep4;
 			ed4 = this->Inner_transfrom_ * ed4;
             ed2_4 = this->Inner_transfrom_ * ed2_4;
-			this->edges[3] = LineFeature(ep4, ed4, ed2_4, edge_r_noise, edge_t_noise);
+			this->edges[3] = LineFeature(ep4, ed4, ed2_4, edge_r_noise, edge_t_noise, end_points4);
 
 			Coord ep5;
 			ep5 << a / 2.0, 0.0, c / 2.0, 1.0;
+
+			Coord ep5_1, ep5_2; 
+			ep5_1 << a / 2.0, -b / 2.0, c / 2.0, 1.0;
+			ep5_2 << a / 2.0, b / 2.0, c / 2.0, 1.0;
+			Coord_vector4 end_points5;
+			get_data_from_line(ep5_1,ep5_2, end_points5);
+			
 			Coord ed5;
 			ed5 << 0.0, 1.0, 0.0, 0.0;
 
@@ -307,10 +447,17 @@ namespace geometry_relation {
 			ed5 = this->Inner_transfrom_ * ed5;
             ed2_5 = this->Inner_transfrom_ * ed2_5;
 
-			this->edges[4] = LineFeature(ep5, ed5, ed2_5, edge_r_noise, edge_t_noise);
+			this->edges[4] = LineFeature(ep5, ed5, ed2_5, edge_r_noise, edge_t_noise, end_points5);
 
 			Coord ep6;
 			ep6 << a / 2.0, 0.0, -c / 2.0, 1.0;
+
+			Coord ep6_1, ep6_2; 
+			ep6_1 << a / 2.0, -b / 2.0, -c / 2.0, 1.0;
+			ep6_2 << a / 2.0, b / 2.0, -c / 2.0, 1.0;
+			Coord_vector4 end_points6;
+			get_data_from_line(ep5_1,ep5_2, end_points6);
+
 			Coord ed6;
 			ed6 << 0.0, 1.0, 0.0, 0.0;
 
@@ -321,10 +468,17 @@ namespace geometry_relation {
 			ed6 = this->Inner_transfrom_ * ed6;
             ed2_6 = this->Inner_transfrom_ * ed2_6;
 
-			this->edges[5] = LineFeature(ep6, ed6, ed2_6, edge_r_noise, edge_t_noise);
+			this->edges[5] = LineFeature(ep6, ed6, ed2_6, edge_r_noise, edge_t_noise, end_points6);
 
 			Coord ep7;
 			ep7 << -a / 2.0, 0.0, c / 2.0, 1.0;
+
+			Coord ep7_1, ep7_2; 
+			ep7_1 << -a / 2.0, -b / 2.0, c / 2.0, 1.0;
+			ep7_2 << -a / 2.0, b / 2.0, c / 2.0, 1.0;
+			Coord_vector4 end_points7;
+			get_data_from_line(ep7_1,ep7_2, end_points7);
+
 			Coord ed7;
 			ed7 << 0.0, 1.0, 0.0, 0.0;
 
@@ -335,10 +489,17 @@ namespace geometry_relation {
 			ed7 = this->Inner_transfrom_ * ed7;
             ed2_7 = this->Inner_transfrom_ * ed2_7;
 
-			this->edges[6] = LineFeature(ep7, ed7, ed2_7, edge_r_noise, edge_t_noise);
+			this->edges[6] = LineFeature(ep7, ed7, ed2_7, edge_r_noise, edge_t_noise, end_points7);
 
 			Coord ep8;
 			ep8 << -a / 2.0, 0.0, -c / 2.0, 1.0;
+
+			Coord ep8_1, ep8_2; 
+			ep8_1 << -a / 2.0, -b / 2.0, -c / 2.0, 1.0;
+			ep8_2 << -a / 2.0, b / 2.0, -c / 2.0, 1.0;
+			Coord_vector4 end_points8;
+			get_data_from_line(ep8_1,ep8_2, end_points8);
+
 			Coord ed8;
 			ed8 << 0.0, 1.0, 0.0, 0.0;
 
@@ -348,10 +509,17 @@ namespace geometry_relation {
 			ep8 = this->Inner_transfrom_ * ep8;
 			ed8 = this->Inner_transfrom_ * ed8;
             ed2_8 = this->Inner_transfrom_ * ed2_8;
-			this->edges[7] = LineFeature(ep8, ed8, ed2_8, edge_r_noise, edge_t_noise);
+			this->edges[7] = LineFeature(ep8, ed8, ed2_8, edge_r_noise, edge_t_noise, end_points8);
 
 			Coord ep9;
 			ep9 << a / 2.0, b / 2.0, 0.0, 1.0;
+
+			Coord ep9_1, ep9_2; 
+			ep9_1 << a / 2.0, b / 2.0, c / 2.0, 1.0;
+			ep9_2 << a / 2.0, b / 2.0, -c / 2.0, 1.0;
+			Coord_vector4 end_points9;
+			get_data_from_line(ep9_1,ep9_2, end_points9);
+
 			Coord ed9;
 			ed9 << 0.0, 0.0, 1.0, 0.0;
 
@@ -361,10 +529,17 @@ namespace geometry_relation {
 			ep9 = this->Inner_transfrom_ * ep9;
 			ed9 = this->Inner_transfrom_ * ed9;
             ed2_9 = this->Inner_transfrom_ * ed2_9;
-			this->edges[8] = LineFeature(ep9, ed9, ed2_9, edge_r_noise, edge_t_noise);
+			this->edges[8] = LineFeature(ep9, ed9, ed2_9, edge_r_noise, edge_t_noise, end_points9);
 
 			Coord ep10;
 			ep10 << a / 2.0, -b / 2.0, 0.0, 1.0;
+
+			Coord ep10_1, ep10_2; 
+			ep10_1 << a / 2.0, -b / 2.0, c / 2.0, 1.0;
+			ep10_2 << a / 2.0, -b / 2.0, -c / 2.0, 1.0;
+			Coord_vector4 end_points10;
+			get_data_from_line(ep10_1,ep10_2, end_points10);
+
 			Coord ed10;
 			ed10 << 0.0, 0.0, 1.0, 0.0;
 
@@ -374,10 +549,17 @@ namespace geometry_relation {
 			ep10 = this->Inner_transfrom_ * ep10;
 			ed10 = this->Inner_transfrom_ * ed10;
             ed2_10 = this->Inner_transfrom_ * ed2_10;
-			this->edges[9] = LineFeature(ep10, ed10, ed2_10, edge_r_noise, edge_t_noise);
+			this->edges[9] = LineFeature(ep10, ed10, ed2_10, edge_r_noise, edge_t_noise, end_points10);
 
 			Coord ep11;
 			ep11 << -a / 2.0, b / 2.0, 0.0, 1.0;
+
+			Coord ep11_1, ep11_2; 
+			ep11_1 << -a / 2.0, b / 2.0, c / 2.0, 1.0;
+			ep11_2 << -a / 2.0, b / 2.0, -c / 2.0, 1.0;
+			Coord_vector4 end_points11;
+			get_data_from_line(ep11_1,ep11_2, end_points11);
+
 			Coord ed11;
 			ed11 << 0.0, 0.0, 1.0, 0.0;
 
@@ -387,10 +569,17 @@ namespace geometry_relation {
 			ep11 = this->Inner_transfrom_ * ep11;
 			ed11 = this->Inner_transfrom_ * ed11;
             ed2_11 = this->Inner_transfrom_ * ed2_11;
-			this->edges[10] = LineFeature(ep11, ed11, ed2_11, edge_r_noise, edge_t_noise);
+			this->edges[10] = LineFeature(ep11, ed11, ed2_11, edge_r_noise, edge_t_noise, end_points11);
 
 			Coord ep12;
 			ep12 << -a / 2.0, -b / 2.0, 0.0, 1.0;
+
+			Coord ep12_1, ep12_2; 
+			ep10_1 << -a / 2.0, -b / 2.0, c / 2.0, 1.0;
+			ep10_2 << -a / 2.0, -b / 2.0, -c / 2.0, 1.0;
+			Coord_vector4 end_points12;
+			get_data_from_line(ep12_1,ep12_2, end_points12);
+
 			Coord ed12;
 			ed12 << 0.0, 0.0, 1.0, 0.0;
 
@@ -400,7 +589,7 @@ namespace geometry_relation {
 			ep12 = this->Inner_transfrom_ * ep12;
 			ed12 = this->Inner_transfrom_ * ed12;
             ed2_12 = this->Inner_transfrom_ * ed2_12;
-			this->edges[11] = LineFeature(ep12, ed12, ed2_12, edge_r_noise, edge_t_noise);
+			this->edges[11] = LineFeature(ep12, ed12, ed2_12, edge_r_noise, edge_t_noise, end_points12);
 
 			// add into feature array:
 			for (int i = 0; i < 6; i++) {
@@ -622,7 +811,6 @@ namespace geometry_relation {
 			dx1 << 1.0, 0.0, 0.0, 0.0;
 			Coord dz1;
 			dz1 = d1.cross3(dx1);
-
 			p1 = this->Inner_transfrom_ * p1;
 			d1 = this->Inner_transfrom_ * d1;
 			dx1 = this->Inner_transfrom_ * dx1;
