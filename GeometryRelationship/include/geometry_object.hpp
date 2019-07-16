@@ -40,6 +40,25 @@ namespace geometry_relation {
 		void SetPosition(Transform objection_position) {
 			this->object_position_ = objection_position;
 		}
+		void get_data_from_plane(Coord p1, Coord p2, Coord p3, Coord p4, Coord_vector4& points){
+			points.clear();
+			/* 
+			points.push_back(p1.block(0, 0, 3, 1));
+			points.push_back(p2.block(0, 0, 3, 1));
+			points.push_back(p3.block(0, 0, 3, 1));
+			points.push_back(p4.block(0, 0, 3, 1));
+			*/
+			points.push_back(p1);
+			points.push_back(p2);
+			points.push_back(p3);
+			points.push_back(p4);
+		};
+
+		void get_data_from_line(Coord p1, Coord p2, Coord_vector4& points){
+			points.clear();
+			points.push_back(p1);
+			points.push_back(p2);
+		};
 
 		// Abstract contact setting : There are still a lot to do on how to avoid redaudent constraints
 		bool Object_Contact(GeometryObject& geometry_object, std::vector<ENUM_CONTACT>& contact_type_vector,
@@ -56,9 +75,9 @@ namespace geometry_relation {
             
             std::vector<double> _temp_individual_noise;
 
-			if (geometry_type_ == cylinder || geometry_object.geometry_type_ == cylinder){
-				return false;
-			}
+			// if (geometry_type_ == cylinder || geometry_object.geometry_type_ == cylinder){
+			// 	return false;
+			// }
 			for (int i = 0; i < this->feature_num; i++) {
 				for (int j = 0; j < geometry_object.feature_num; j++) {
 					
@@ -101,8 +120,7 @@ namespace geometry_relation {
 						};
 						std::cout << "========= Contact Found ========" << std::endl;
 						std::cout << "Contact type: " << contact_type_string[_temp_contact] << std::endl;
-						std::cout << "Between " << geometry_type_string[this->geometry_type_]
-							<< " : " << geometry_type_string[geometry_object.geometry_type_] << std::endl;
+						std::cout << "Between " << geometry_type_string[this->geometry_type_] << " : " << geometry_type_string[geometry_object.geometry_type_] << std::endl;
 						std::cout << "Noise level " << _temp_individual_noise[0] << " , " << _temp_individual_noise[1] << std::endl;
 
 #endif // _TEST_OUTPUT_ 
@@ -140,26 +158,6 @@ namespace geometry_relation {
 
     // box is special : including 3d bounding box
 	public:
-		void get_data_from_plane(Coord p1, Coord p2, Coord p3, Coord p4, Coord_vector4& points){
-			points.clear();
-			/* 
-			points.push_back(p1.block(0, 0, 3, 1));
-			points.push_back(p2.block(0, 0, 3, 1));
-			points.push_back(p3.block(0, 0, 3, 1));
-			points.push_back(p4.block(0, 0, 3, 1));
-			*/
-			points.push_back(p1);
-			points.push_back(p2);
-			points.push_back(p3);
-			points.push_back(p4);
-		};
-
-		void get_data_from_line(Coord p1, Coord p2, Coord_vector4& points){
-			points.clear();
-			points.push_back(p1);
-			points.push_back(p2);
-		};
-
 		Box(double a, double b, double c, Transform inner_transform) : 
 			GeometryObject(box, Transform::Identity(), inner_transform), a_(a), b_(b), c_(c)
 		{
@@ -693,6 +691,20 @@ namespace geometry_relation {
 
 			Coord p1;
 			p1 << 0.0, 0.0, length / 2.0, 1.0;
+
+			Coord pc1, pc2, pc3, pc4;// four corner points of this plane 
+			pc1 << radius, 0, length/2.0, 1.0;
+			pc2 << -radius, 0, length/2.0, 1.0;
+			pc3 << 0, radius, length/2.0, 1.0;
+			pc4 << 0, -radius, length/2.0, 1.0;
+			pc1 = this->Inner_transfrom_ * pc1;
+			pc2 = this->Inner_transfrom_ * pc2;
+			pc3 = this->Inner_transfrom_ * pc3;
+			pc4 = this->Inner_transfrom_ * pc4;
+
+			Coord_vector4 points1;
+			get_data_from_plane(pc1, pc2, pc3, pc4, points1);
+
 			Coord d1;
 			d1 << 0.0, 0.0, 1.0, 0.0;
 
@@ -705,10 +717,23 @@ namespace geometry_relation {
 			d1 = this->Inner_transfrom_ * d1;
 			dx1 = this->Inner_transfrom_ * dx1;
 			dz1 = this->Inner_transfrom_ * dz1;
-			this->planes[0] = PlaneFeature(p1, d1, plane_r_noise,  plane_t_noise, dx1, dz1);
+			this->planes[0] = PlaneFeature(p1, d1, plane_r_noise,  plane_t_noise, dx1, dz1, points1);
 
 			Coord p2;
 			p2 << 0.0, 0.0, -length / 2.0, 1.0;
+
+			pc1 << radius, 0, -length/2.0, 1.0;
+			pc2 << -radius, 0, -length/2.0, 1.0;
+			pc3 << 0, radius, -length/2.0, 1.0;
+			pc4 << 0, -radius, -length/2.0, 1.0;
+			pc1 = this->Inner_transfrom_ * pc1;
+			pc2 = this->Inner_transfrom_ * pc2;
+			pc3 = this->Inner_transfrom_ * pc3;
+			pc4 = this->Inner_transfrom_ * pc4;
+
+			Coord_vector4 points2;
+			get_data_from_plane(pc1, pc2, pc3, pc4, points2);
+			
 			Coord d2;
 			d2 << 0.0, 0.0, -1.0, 0.0;
 
@@ -721,7 +746,7 @@ namespace geometry_relation {
 			d2 = this->Inner_transfrom_ * d2;
 			dx2 = this->Inner_transfrom_ * dx2;
 			dz2 = this->Inner_transfrom_ * dz2;
-			this->planes[1] = PlaneFeature(p2, d2, plane_r_noise,  plane_t_noise, dx2, dz2);
+			this->planes[1] = PlaneFeature(p2, d2, plane_r_noise,  plane_t_noise, dx2, dz2, points2);
 
 			Coord p3;
 			p3 << 0.0, 0.0, 0.0, 1.0;
@@ -801,9 +826,24 @@ namespace geometry_relation {
 			this->feature_num = 1;
 			this->feature_array_ = new GeometryFeature * [1];
 			this->planes = new PlaneFeature[1];
+			double radius = 0.9144; //table radius
 
 			Coord p1;
 			p1 << 0.0, 0.0, 0.0, 1.0;
+
+			Coord pc1, pc2, pc3, pc4;// four corner points of this plane 
+			pc1 << radius, 0, 0, 1.0;
+			pc2 << -radius, 0, 0, 1.0;
+			pc3 << 0, radius, 0, 1.0;
+			pc4 << 0, -radius, 0, 1.0;
+			pc1 = this->Inner_transfrom_ * pc1;
+			pc2 = this->Inner_transfrom_ * pc2;
+			pc3 = this->Inner_transfrom_ * pc3;
+			pc4 = this->Inner_transfrom_ * pc4;
+
+			Coord_vector4 points1;
+			get_data_from_plane(pc1, pc2, pc3, pc4, points1);
+
 			Coord d1;
 			d1 << 0.0, 0.0, 1.0, 0.0;
 
@@ -815,7 +855,7 @@ namespace geometry_relation {
 			d1 = this->Inner_transfrom_ * d1;
 			dx1 = this->Inner_transfrom_ * dx1;
 			dz1 = this->Inner_transfrom_ * dz1;
-			this->planes[0] = PlaneFeature(p1, d1, plane_r_noise, plane_t_noise, dx1, dz1);
+			this->planes[0] = PlaneFeature(p1, d1, plane_r_noise, plane_t_noise, dx1, dz1, points1);
 			this->feature_array_[0] = &this->planes[0];
 
 		};

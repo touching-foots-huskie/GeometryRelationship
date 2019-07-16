@@ -118,7 +118,7 @@ namespace geometry_relation{
 								std::vector<Coord>& feature_point_1, std::vector<Coord>& feature_point_2,
 								std::vector<Coord>& feature_direction_1, std::vector<Coord>& feature_direction_2,
 								std::vector<int>& feature_id_1, std::vector<int>& feature_id_2,
-								std::vector<double>& noise_level_vector) {
+								std::vector<double>& noise_level_vector, vector<ObjectState>& object_states) {
 			// clean all
             objects_id1.clear();
             objects_id2.clear();
@@ -149,7 +149,8 @@ namespace geometry_relation{
 #ifdef _TEST_OUTPUT_
 					if (contact_existence) {
 						std::cout << "Object ids are " << it->first << " : " << it2->first << std::endl;
-                    }
+						std::cout << "Object labels are " << object_states[it->first].label_ << " : " << object_states[it2->first].label_ << std::endl;
+					}
 #endif // _TEST_OUTPUT_ 
 					
 				}

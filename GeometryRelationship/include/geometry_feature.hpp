@@ -489,7 +489,7 @@ namespace geometry_relation {
 		SurfaceFeature() : GeometryFeature() {};
 		SurfaceFeature(Coord point, Coord direction, double rotation_noise_bound,
             double transition_noise_bound, double r) : 
-                GeometryFeature(point, direction, plane, rotation_noise_bound, transition_noise_bound, r) {};
+                GeometryFeature(point, direction, surface, rotation_noise_bound, transition_noise_bound, r) {};
 		SurfaceFeature(const SurfaceFeature& obj) : GeometryFeature(obj) {};
 		
 		virtual double Contact(GeometryFeature& geometry_feature, ENUM_CONTACT& contact_type,
