@@ -125,7 +125,8 @@ namespace geometry_relation {
 
 #endif // _TEST_OUTPUT_ 
 						
-						break;  // if plane-plane, then there no plane-edge.
+						//  break;  // if plane-plane, then there no plane-edge.
+                        return contact_exist;  //  there is at most only one relation between two objects
 						
 					}
                     _temp_individual_noise.clear();
